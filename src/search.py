@@ -6,17 +6,22 @@ from github import Github, Auth
 from git import Repo, Git
 from loguru import logger
 
+from line_counting import get_lines_in_repo
+
 GH_TOKEN = os.getenv("GH_TOKEN")
 
 # Params
 language = "python"
 license_type = "mit"
 size_lower_bound = 1e3 # 1MB
-size_upper_bound = 10e3 # 10MB
+size_upper_bound = 100e3 # 100MB
 stars_lower_bound = 5000
 contributors_lower_bound = 50
 num_lines_lower_bound = 10e3
 num_lines_upper_bound = 20e3
+
+# Blacklisted users
+blacklisted = ["openai"]
 
 # Setup a temp dir to clone to
 clone_dir = tempfile.TemporaryDirectory()
@@ -25,6 +30,10 @@ clone_dir = tempfile.TemporaryDirectory()
 g = Github(GH_TOKEN)
 query = f"language:{language} license:{license_type} size:{size_lower_bound}..{size_upper_bound} stars:>{stars_lower_bound}"
 result = g.search_repositories(query)
+
+filtered_repos = []
+for repo in result:
+    filtered_repos.append(repo)
 
 # If you want to handle pagination manually, you can use the totalCount and totalPages properties
 logger.info(f"Total repositories found: {result.totalCount}")
@@ -45,41 +54,20 @@ def clone_repo(repo_name):
     Git().clone(clone_url, clone_path)
     return clone_path
 
-def get_lines_in_file(filename):
-    try: 
-        with open(filename, "r") as file:
-            return sum(1 for line in file if line.strip())
-    except FileNotFoundError:
-        logger.error(f"Couldn't find {filename}!")
-        return 0
-
-def get_lines_in_repo(repo_path):
-    # Walk through the repository directory tree
-    python_files = []
-    for subdir, dirs, files in os.walk(repo_path):
-        # Exclude .git directory
-        if '.git' in dirs:
-            dirs.remove('.git')
-        # Filter and count Python files
-        python_files.extend([os.path.join(subdir, file) for file in files if file.endswith('.py')])
-
-    num_lines = 0
-    for filename in python_files:
-        num_lines += get_lines_in_file(filename)
-    logger.info(f"Number of files in the repository: {len(python_files)}")
-    logger.info(f"Number of lines in the repository: {num_lines}")
-    return num_lines
-
-
 # Filter on number of contributors
-filtered_repos = []
-for page_number in range(result.totalCount // 30):  # 30 is the number of results per page
-    page = result.get_page(page_number)
-    for repo in page:
-        if repo.get_contributors().totalCount >= contributors_lower_bound:
-            filtered_repos.append(repo)
+enough_contributor_repos = []
+for repo in filtered_repos:
+    if repo.get_contributors().totalCount >= contributors_lower_bound:
+        enough_contributor_repos.append(repo)
 
+filtered_repos = enough_contributor_repos
 logger.info(f"Remaining repos: {len(filtered_repos)}")
+
+# Filter on activity
+active_repos = []
+for repo in filtered_repos:
+    stats = repo.get_stats_commit_activity()
+    breakpoint()
 
 # Filter on the number of lines
 repos_with_right_lines = []
