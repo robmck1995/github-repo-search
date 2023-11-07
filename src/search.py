@@ -6,6 +6,7 @@ from github import Github, Auth
 from git import Repo, Git
 from loguru import logger
 
+GH_TOKEN = os.getenv("GH_TOKEN")
 
 # Params
 language = "python"
@@ -17,29 +18,31 @@ contributors_lower_bound = 50
 num_lines_lower_bound = 10e3
 num_lines_upper_bound = 20e3
 
+# Setup a temp dir to clone to
+clone_dir = tempfile.TemporaryDirectory()
 
 # Initialize a Github instance:
-clone_dir = tempfile.TemporaryDirectory()
-github = Github()
+g = Github(GH_TOKEN)
 query = f"language:{language} license:{license_type} size:{size_lower_bound}..{size_upper_bound} stars:>{stars_lower_bound}"
-result = github.search_repositories(query)
+result = g.search_repositories(query)
 
 # If you want to handle pagination manually, you can use the totalCount and totalPages properties
 logger.info(f"Total repositories found: {result.totalCount}")
 
 def clone_repo(repo_name):
-    github = Github()
+    auth = Auth.Token(GH_TOKEN)
+    github = Github(auth=auth)
     github_repo = github.get_repo(repo_name)
-#    clone_url = github_repo.clone_url.replace(
-#        "https://", f"https://{github.get_user().login}:{GH_TOKEN}@"
-#    )
+    clone_url = github_repo.clone_url.replace(
+        "https://", f"https://{github.get_user().login}:{GH_TOKEN}@"
+    )
 
     clone_path = os.path.join(clone_dir.name, repo_name)
 
     # We need to delete the directory if it already exists
     if os.path.isdir(clone_path):
         shutil.rmtree(clone_path)
-    Git().clone(github_repo.clone_url, clone_path)
+    Git().clone(clone_url, clone_path)
     return clone_path
 
 def get_lines_in_file(filename):
@@ -66,9 +69,6 @@ def get_lines_in_repo(repo_path):
     logger.info(f"Number of files in the repository: {len(python_files)}")
     logger.info(f"Number of lines in the repository: {num_lines}")
     return num_lines
-
-
-
 
 
 # Filter on number of contributors
