@@ -11,14 +11,14 @@ def get_lines_in_file(filename):
         logger.error(f"Couldn't find {filename}!")
         return 0
 
-def get_lines_in_repo(repo_path):
+def get_lines_in_repo(repo_path, skip_tests):
     # Walk through the repository directory tree
     python_files = []
     for subdir, dirs, files in os.walk(repo_path):
         # Exclude .git directory
         if '.git' in dirs:
             dirs.remove('.git')
-        if 'tests' in dirs:
+        if skip_tests and 'tests' in dirs:
             dirs.remove('tests')
         # Filter and count Python files
         python_files.extend([os.path.join(subdir, file) for file in files if file.endswith('.py')])
@@ -31,4 +31,8 @@ def get_lines_in_repo(repo_path):
     return num_lines
 
 if __name__ == "__main__":
-    get_lines_in_repo(sys.argv[1])
+    if len(sys.argv) > 2:
+        get_lines_in_repo(sys.argv[1], True)
+    else:
+        get_lines_in_repo(sys.argv[1], False)
+
