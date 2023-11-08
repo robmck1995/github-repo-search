@@ -19,8 +19,7 @@ COPY requirements.txt .
 RUN pip install -r requirements.txt
 
 # add github args
-ENV GH_TOKEN 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
-
+ARG GH_TOKEN
 WORKDIR /app
 
 # copy the files

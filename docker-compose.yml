@@ -5,5 +5,4 @@ services:
       context: .
       dockerfile: build/Dockerfile
       args:
-        GH_TOKEN: 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
-
+        GH_TOKEN: <GITHUB_ACCESS_TOKEN>

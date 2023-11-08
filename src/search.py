@@ -9,19 +9,17 @@ from loguru import logger
 from line_counting import get_lines_in_repo
 
 GH_TOKEN = os.getenv("GH_TOKEN")
+logger.debug(GH_TOKEN)
 
 # Params
 language = "python"
 license_type = "mit"
 size_lower_bound = 1e3 # 1MB
-size_upper_bound = 100e3 # 100MB
-stars_lower_bound = 5000
-contributors_lower_bound = 50
-num_lines_lower_bound = 10e3
-num_lines_upper_bound = 20e3
-
-# Blacklisted users
-blacklisted = ["openai"]
+size_upper_bound = 20e3 # 20MB
+stars_lower_bound = 40000
+contributors_lower_bound = 30
+num_lines_lower_bound = 8e3
+num_lines_upper_bound = 30e3
 
 # Setup a temp dir to clone to
 clone_dir = tempfile.TemporaryDirectory()
