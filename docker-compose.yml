@@ -1,8 +1,0 @@
-services:
-  github:
-    image: github_search
-    build:
-      context: .
-      dockerfile: build/Dockerfile
-      args:
-        GH_TOKEN: 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
